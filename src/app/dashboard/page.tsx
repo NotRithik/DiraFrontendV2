@@ -5,7 +5,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/Button";
 import { InteractiveProgressBar } from "@/components/InteractiveProgressBar";
-import { PositionHealthBar } from "@/components/PositionHealthBar"; // Import the new component
+import { PositionHealthBar } from "@/components/PositionHealthBar";
+import { useWallet } from "@/context/WalletContext";
+import { useDira } from "@/context/DiraContext";
+import Decimal from "decimal.js";
 
 // A brutalist-style hamburger icon component
 const HamburgerIcon = () => (
@@ -17,68 +20,98 @@ const HamburgerIcon = () => (
 );
 
 // Health calculation logic extracted into a reusable function
-const calculateHealth = (collateral: number, dira: number) => {
-    const OM_PRICE_IN_AED = 5;
-    const LIQUIDATION_RATIO = 1.5; // 150%
-    const SAFE_RATIO = 3.0; // 300%
+const calculateHealth = (collateral: number, dira: number, omPrice: number, liquidationRatio: number, safeRatio: number) => {
+    if (liquidationRatio >= safeRatio) return { ratio: Infinity, percentage: 100 };
 
-    const collateralValue = collateral * OM_PRICE_IN_AED;
-    const debtValue = dira;
+    const collateralValue = new Decimal(collateral).mul(omPrice);
+    const debtValue = new Decimal(dira);
 
-    if (debtValue === 0) {
+    if (debtValue.isZero()) {
         return { ratio: Infinity, percentage: 100 };
     }
 
-    const currentRatio = collateralValue / debtValue;
-    const percentage = ((currentRatio - LIQUIDATION_RATIO) / (SAFE_RATIO - LIQUIDATION_RATIO)) * 100;
+    const currentRatio = collateralValue.div(debtValue);
+    const percentage = currentRatio.sub(liquidationRatio).div(new Decimal(safeRatio).sub(liquidationRatio)).mul(100);
     
-    return { ratio: currentRatio, percentage: Math.max(0, Math.min(100, percentage)) };
+    return { 
+        ratio: currentRatio.toNumber(), 
+        percentage: Math.max(0, Math.min(100, percentage.toNumber())) 
+    };
 };
 
-
 export default function DashboardPage() {
-    // --- State Management ---
-    const [lockedCollateral, setLockedCollateral] = useState(120);
-    const [walletOmBalance, setWalletOmBalance] = useState(80);
-    const [mintedDira, setMintedDira] = useState(50);
-    const maxMintableDira = 80;
+    // --- Consume Contexts ---
+    const { connectWallet, checkWalletConnection } = useDira();
+    const { isConnected, address } = useWallet();
+    const {
+        lockedCollateral: confirmedLockedCollateral,
+        mintedDira: confirmedMintedDira,
+        walletOmBalance,
+        currentOmPrice,
+        liquidationHealth,
+        mintableHealth: safeHealth, // Assuming mintableHealth is the "safe" ratio
+        lockCollateral,
+        unlockCollateral,
+        mintDira,
+        returnDira,
+    } = useDira();
 
-    const [sliderCollateralValue, setSliderCollateralValue] = useState(lockedCollateral);
-    const [sliderDiraValue, setSliderDiraValue] = useState(mintedDira);
+    const totalOmBalance = new Decimal(confirmedLockedCollateral).plus(walletOmBalance).toNumber();
+    // Max mintable Dira is based on locked collateral, not total balance
+    const maxMintableDira = safeHealth > 0 ? new Decimal(confirmedLockedCollateral).mul(currentOmPrice).div(safeHealth).toNumber() : 0;
+
+    // --- UI State for Sliders ---
+    const [sliderCollateralValue, setSliderCollateralValue] = useState(confirmedLockedCollateral);
+    const [sliderDiraValue, setSliderDiraValue] = useState(confirmedMintedDira);
     
-    useEffect(() => { setSliderCollateralValue(lockedCollateral); }, [lockedCollateral]);
-    useEffect(() => { setSliderDiraValue(mintedDira); }, [mintedDira]);
+    useEffect(() => { setSliderCollateralValue(confirmedLockedCollateral); }, [confirmedLockedCollateral]);
+    useEffect(() => { setSliderDiraValue(confirmedMintedDira); }, [confirmedMintedDira]);
 
     // --- Health Calculation States ---
     const [currentHealthPercentage, setCurrentHealthPercentage] = useState(0);
     const [previewHealthPercentage, setPreviewHealthPercentage] = useState(0);
     const [previewCollateralizationRatio, setPreviewCollateralizationRatio] = useState(0);
 
-    // Effect for CURRENT health (based on locked values)
+    // Effect for CURRENT health
     useEffect(() => {
-        const { percentage } = calculateHealth(lockedCollateral, mintedDira);
+        const { percentage } = calculateHealth(confirmedLockedCollateral, confirmedMintedDira, currentOmPrice, liquidationHealth, safeHealth);
         setCurrentHealthPercentage(percentage);
-    }, [lockedCollateral, mintedDira]);
+    }, [confirmedLockedCollateral, confirmedMintedDira, currentOmPrice, liquidationHealth, safeHealth]);
 
-    // Effect for PREVIEW health (based on slider values)
+    // Effect for PREVIEW health
     useEffect(() => {
-        const { ratio, percentage } = calculateHealth(sliderCollateralValue, sliderDiraValue);
+        const { ratio, percentage } = calculateHealth(sliderCollateralValue, sliderDiraValue, currentOmPrice, liquidationHealth, safeHealth);
         setPreviewHealthPercentage(percentage);
         setPreviewCollateralizationRatio(ratio);
-    }, [sliderCollateralValue, sliderDiraValue]);
+    }, [sliderCollateralValue, sliderDiraValue, currentOmPrice, liquidationHealth, safeHealth]);
 
-
-    const totalOmBalance = lockedCollateral + walletOmBalance;
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+    // --- Action Handlers ---
     const handleApplyCollateral = () => {
-        const difference = lockedCollateral - sliderCollateralValue;
-        setWalletOmBalance(walletOmBalance + difference);
-        setLockedCollateral(sliderCollateralValue);
+        const diff = new Decimal(sliderCollateralValue).sub(confirmedLockedCollateral);
+        if (diff.isZero()) return;
+        
+        if (diff.isPositive()) {
+            // Lock more collateral
+            checkWalletConnection(() => lockCollateral(diff.toNumber()));
+        } else {
+            // Unlock collateral
+            checkWalletConnection(() => unlockCollateral(diff.abs().toNumber()));
+        }
     };
 
     const handleApplyDira = () => {
-        setMintedDira(sliderDiraValue);
+        const diff = new Decimal(sliderDiraValue).sub(confirmedMintedDira);
+        if (diff.isZero()) return;
+
+        if (diff.isPositive()) {
+            // Mint more Dira
+            checkWalletConnection(() => mintDira(diff.toNumber()));
+        } else {
+            // Return/Burn Dira
+            checkWalletConnection(() => returnDira(diff.abs().toNumber()));
+        }
     };
 
     return (
@@ -88,14 +121,18 @@ export default function DashboardPage() {
                 <Link href="/" className="text-3xl md:text-4xl font-extrabold uppercase text-white">DIRA</Link>
                 <div className="hidden md:grid md:grid-cols-2 gap-4 max-w-xl w-full">
                     <Link href="/" className="block w-full"><Button variant="white" className="w-full md:w-full">Home</Button></Link>
-                    <Button variant="primary" className="w-full md:w-full">Connect Wallet</Button>
+                    <Button variant="primary" className="w-full md:w-full" onClick={connectWallet}>
+                        {isConnected ? `${address?.substring(0, 6)}...${address?.substring(address.length - 4)}` : "Connect Wallet"}
+                    </Button>
                 </div>
                 <button className="md:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu"><HamburgerIcon /></button>
                 {isMenuOpen && (
                     <div className="md:hidden absolute top-full left-0 right-0 bg-[#E94E1B] border-b-8 border-black px-8 py-4 z-10">
                         <div className="grid grid-cols-1 gap-4">
                             <Link href="/"><Button variant="white" className="w-full">Home</Button></Link>
-                            <Button variant="primary" className="w-full">Connect Wallet</Button>
+                            <Button variant="primary" className="w-full" onClick={connectWallet}>
+                                {isConnected ? `${address?.substring(0, 6)}...` : "Connect Wallet"}
+                            </Button>
                         </div>
                     </div>
                 )}
@@ -104,9 +141,9 @@ export default function DashboardPage() {
             {/* Top Summary Bar */}
             <section className="hidden md:block border-b-8 border-black bg-yellow-400">
                 <div className="max-w-6xl mx-auto px-8 md:px-16 py-8 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                    <div><h3 className="text-2xl md:text-3xl font-extrabold uppercase">Locked Collateral</h3><p className="text-3xl md:text-4xl font-sans mt-2">{lockedCollateral} OM</p></div>
-                    <div><h3 className="text-2xl md:text-3xl font-extrabold uppercase">Minted Dira</h3><p className="text-3xl md:text-4xl font-sans mt-2">{mintedDira} Dira</p></div>
-                    <div><h3 className="text-2xl md:text-3xl font-extrabold uppercase">Mintable Capacity</h3><p className="text-3xl md:text-4xl font-sans mt-2">{maxMintableDira - mintedDira} Dira</p></div>
+                    <div><h3 className="text-2xl md:text-3xl font-extrabold uppercase">Locked Collateral</h3><p className="text-3xl md:text-4xl font-sans mt-2">{confirmedLockedCollateral.toFixed(2)} OM</p></div>
+                    <div><h3 className="text-2xl md:text-3xl font-extrabold uppercase">Minted Dira</h3><p className="text-3xl md:text-4xl font-sans mt-2">{confirmedMintedDira.toFixed(2)} Dira</p></div>
+                    <div><h3 className="text-2xl md:text-3xl font-extrabold uppercase">Mintable Capacity</h3><p className="text-3xl md:text-4xl font-sans mt-2">{Math.max(0, maxMintableDira - confirmedMintedDira).toFixed(2)} Dira</p></div>
                 </div>
             </section>
 
@@ -116,10 +153,10 @@ export default function DashboardPage() {
                     <div className="border-8 border-black bg-yellow-400 p-8 flex flex-col justify-between shadow-[8px_8px_0_#000]">
                         <h2 className="text-3xl md:text-4xl font-extrabold uppercase">Collateral (OM)</h2>
                         <div className="mt-6 space-y-4">
-                            <p className="font-sans text-xl">Locked: {lockedCollateral} / {totalOmBalance} OM</p>
-                            <p className="font-sans text-xl">Unlockable: {Math.max(0, lockedCollateral - 80)} OM</p>
+                            <p className="font-sans text-xl">Locked: {confirmedLockedCollateral.toFixed(2)} / {totalOmBalance.toFixed(2)} OM</p>
+                            <p className="font-sans text-xl">Wallet Balance: {walletOmBalance.toFixed(2)} OM</p>
                         </div>
-                        <InteractiveProgressBar currentValue={lockedCollateral} sliderValue={sliderCollateralValue} maxValue={totalOmBalance} onValueChange={setSliderCollateralValue} baseColor="bg-black" previewAddColor="bg-orange-500" previewRemoveColor="bg-gray-400"/>
+                        <InteractiveProgressBar currentValue={confirmedLockedCollateral} sliderValue={sliderCollateralValue} maxValue={totalOmBalance} onValueChange={setSliderCollateralValue} baseColor="bg-black" previewAddColor="bg-orange-500" previewRemoveColor="bg-gray-400"/>
                         <Button variant="white" className="mt-8" onClick={handleApplyCollateral}>Apply</Button>
                     </div>
 
@@ -127,10 +164,10 @@ export default function DashboardPage() {
                     <div className="border-8 border-black bg-orange-600 p-8 flex flex-col justify-between shadow-[8px_8px_0_#000] text-white">
                         <h2 className="text-3xl md:text-4xl font-extrabold uppercase">Dira (AED)</h2>
                         <div className="mt-6 space-y-4">
-                            <p className="font-sans text-xl">Minted: {mintedDira} / {maxMintableDira} Dira</p>
-                            <p className="font-sans text-xl">Mintable: {maxMintableDira - mintedDira} Dira</p>
+                            <p className="font-sans text-xl">Minted: {confirmedMintedDira.toFixed(2)} / {maxMintableDira.toFixed(2)} Dira</p>
+                            <p className="font-sans text-xl">Mintable: {Math.max(0, maxMintableDira - confirmedMintedDira).toFixed(2)} Dira</p>
                         </div>
-                        <InteractiveProgressBar currentValue={mintedDira} sliderValue={sliderDiraValue} maxValue={maxMintableDira} onValueChange={setSliderDiraValue} baseColor="bg-black" previewAddColor="bg-yellow-400" previewRemoveColor="bg-gray-400"/>
+                        <InteractiveProgressBar currentValue={confirmedMintedDira} sliderValue={sliderDiraValue} maxValue={maxMintableDira} onValueChange={setSliderDiraValue} baseColor="bg-black" previewAddColor="bg-yellow-400" previewRemoveColor="bg-gray-400"/>
                         <Button variant="white" className="mt-8" onClick={handleApplyDira}>Apply</Button>
                     </div>
                 </div>
