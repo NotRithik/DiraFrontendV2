@@ -123,7 +123,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      
+
       {/* Combined Final Section - Slide 3 */}
       <section className="min-h-screen flex flex-col snap-start border-t-8 border-black">
         <div className="bg-yellow-400 text-black flex-grow flex flex-col justify-center items-center p-8 md:p-16">
