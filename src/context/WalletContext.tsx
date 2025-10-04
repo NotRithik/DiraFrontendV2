@@ -1,9 +1,9 @@
+// src/context/WalletContext.tsx
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Window as KeplrWindow } from '@keplr-wallet/types';
-import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
-import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+import { CosmWasmClient, SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { toast } from 'sonner';
 import { ChainInfo } from '@keplr-wallet/types';
 
@@ -13,6 +13,7 @@ declare global {
 
 interface WalletContextType {
   isConnected: boolean;
+  isConnecting: boolean; // Added this state
   address: string | null;
   cosmWasmClient: CosmWasmClient | null;
   connectWallet: (onConnectSuccess?: () => void, onConnectFailed?: () => void) => Promise<void>;
@@ -27,9 +28,7 @@ const mantraChainInfo: ChainInfo = {
   chainName: process.env.NEXT_PUBLIC_MANTRA_TESTNET_NAME!,
   rpc: process.env.NEXT_PUBLIC_MANTRA_RPC_ENDPOINT!,
   rest: 'https://api.dukong.mantrachain.io',
-  bip44: {
-    coinType: 118,
-  },
+  bip44: { coinType: 118 },
   bech32Config: {
     bech32PrefixAccAddr: process.env.NEXT_PUBLIC_BECH32_HRP!,
     bech32PrefixAccPub: `${process.env.NEXT_PUBLIC_BECH32_HRP!}pub`,
@@ -38,38 +37,15 @@ const mantraChainInfo: ChainInfo = {
     bech32PrefixConsAddr: `${process.env.NEXT_PUBLIC_BECH32_HRP!}valcons`,
     bech32PrefixConsPub: `${process.env.NEXT_PUBLIC_BECH32_HRP!}valconspub`,
   },
-  currencies: [
-    {
-      coinDenom: 'OM',
-      coinMinimalDenom: process.env.NEXT_PUBLIC_DENOM!,
-      coinDecimals: 6,
-      coinGeckoId: 'mantra-dao',
-    },
-  ],
-  feeCurrencies: [
-    {
-      coinDenom: 'OM',
-      coinMinimalDenom: process.env.NEXT_PUBLIC_DENOM!,
-      coinDecimals: 6,
-      coinGeckoId: 'mantra-dao',
-      gasPriceStep: {
-        low: 0.01,
-        average: 0.025,
-        high: 0.03,
-      },
-    },
-  ],
+  currencies: [{ coinDenom: 'OM', coinMinimalDenom: process.env.NEXT_PUBLIC_DENOM!, coinDecimals: 6 }],
+  feeCurrencies: [{ coinDenom: 'OM', coinMinimalDenom: process.env.NEXT_PUBLIC_DENOM!, coinDecimals: 6, gasPriceStep: { low: 0.01, average: 0.025, high: 0.03 } }],
   features: ["cosmwasm"],
-  stakeCurrency: {
-    coinDenom: 'OM',
-    coinMinimalDenom: process.env.NEXT_PUBLIC_DENOM!,
-    coinGeckoId: 'mantra-dao',
-    coinDecimals: 6,
-  },
+  stakeCurrency: { coinDenom: 'OM', coinMinimalDenom: process.env.NEXT_PUBLIC_DENOM!, coinDecimals: 6 },
 };
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false); // Added this state
   const [address, setAddress] = useState<string | null>(null);
   const [cosmWasmClient, setCosmWasmClient] = useState<CosmWasmClient | null>(null);
 
@@ -78,68 +54,46 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       toast.error('Keplr is not installed.');
       return;
     }
-
     try {
       await window.keplr.enable(mantraChainInfo.chainId);
       const offlineSigner = window.keplr.getOfflineSigner(mantraChainInfo.chainId);
-      const signingClient = await SigningCosmWasmClient.connectWithSigner(
-        mantraChainInfo.rpc,
-        offlineSigner
-      );
-      return signingClient;
-
-
+      return await SigningCosmWasmClient.connectWithSigner(mantraChainInfo.rpc, offlineSigner);
     } catch (error) {
       console.error('Error getting signing client:', error);
       toast.error('Failed to get signing client.');
     }
   }, []);
 
-
   const connectWallet = useCallback(async (onConnectSuccess?: () => void, onConnectFailed?: () => void) => {
     if (!window.keplr) {
       toast.error('Keplr wallet extension is required. Please install Keplr.');
-      if (typeof onConnectFailed === 'function') {
-        onConnectFailed();
-      }
+      onConnectFailed?.();
       return;
     }
-
+    
+    setIsConnecting(true); // Set connecting state
     try {
       await window.keplr.experimentalSuggestChain(mantraChainInfo);
       await window.keplr.enable(mantraChainInfo.chainId);
-
       const offlineSigner = window.keplr.getOfflineSigner(mantraChainInfo.chainId);
       const accounts = await offlineSigner.getAccounts();
 
       if (accounts.length === 0) {
-        toast.error('No accounts found in Keplr wallet.');
-        if (typeof onConnectFailed === 'function') {
-          onConnectFailed();
-        }
-        return;
+        throw new Error('No accounts found in Keplr wallet.');
       }
 
       const client = await CosmWasmClient.connect(mantraChainInfo.rpc);
       setCosmWasmClient(client);
       setAddress(accounts[0].address);
       setIsConnected(true);
-      toast.success('Keplr Wallet connected successfully!');
-      console.log("connectWallet: Connection successful, calling onConnectSuccess");
-      if (typeof onConnectSuccess === 'function') {
-        console.log("connectWallet: onConnectSuccess callback provided and is a function");
-        console.log("connectWallet: Before onConnectSuccess callback execution");
-        onConnectSuccess();
-        console.log("connectWallet: After onConnectSuccess callback execution");
-      } else {
-        console.log("connectWallet: onConnectSuccess callback *not* provided or *not* a function");
-      }
+      toast.success('Wallet connected!');
+      onConnectSuccess?.();
     } catch (error) {
       console.error('Error connecting to wallet:', error);
-      toast.error('Failed to connect to wallet.');
-      if (typeof onConnectFailed === 'function') {
-        onConnectFailed();
-      }
+      toast.error('Failed to connect wallet.');
+      onConnectFailed?.();
+    } finally {
+      setIsConnecting(false); // Unset connecting state
     }
   }, []);
 
@@ -147,28 +101,23 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setIsConnected(false);
     setAddress(null);
     setCosmWasmClient(null);
-    toast.success('Wallet disconnected.');
+    toast.info('Wallet disconnected.');
   };
 
   useEffect(() => {
     const handleAccountsChanged = () => {
       if (isConnected) {
         disconnectWallet();
-        connectWallet();
+        // Optional: you could auto-reconnect here if you want
+        // connectWallet();
       }
     };
-
-    if (window.keplr) {
-      window.addEventListener('keplr_keystorechange_cosmos', handleAccountsChanged);
-    }
-
-    return () => {
-      window.removeEventListener('keplr_keystorechange_cosmos', handleAccountsChanged);
-    };
+    window.addEventListener('keplr_keystorechange', handleAccountsChanged);
+    return () => window.removeEventListener('keplr_keystorechange', handleAccountsChanged);
   }, [isConnected, connectWallet]);
 
   return (
-    <WalletContext.Provider value={{ isConnected, address, cosmWasmClient, connectWallet, disconnectWallet, getSigningClient }}>
+    <WalletContext.Provider value={{ isConnected, isConnecting, address, cosmWasmClient, connectWallet, disconnectWallet, getSigningClient }}>
       {children}
     </WalletContext.Provider>
   );
