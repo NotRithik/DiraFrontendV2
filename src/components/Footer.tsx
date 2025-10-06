@@ -13,8 +13,26 @@ export default function Footer() {
           <h5 className="font-bold uppercase mb-2">Resources</h5>
           <ul className="space-y-2 text-sm">
             <li><Link href="/whitepaper" className="underline">Whitepaper (PDF)</Link></li>
-            <li><Link href="/docs" className="underline">Docs & Developers</Link></li>
-            <li><Link href="/audit" className="underline">Audit Report</Link></li>
+            <li>
+              <a
+                href="https://docs.dira.foundation"
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                Docs & Developers
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://github.com/NotRithik/DiraAuditReport"
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                Audit Report
+              </a>
+            </li>
             <li><Link href="/about" className="underline">About</Link></li>
           </ul>
         </div>
