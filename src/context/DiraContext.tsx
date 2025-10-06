@@ -19,11 +19,12 @@ interface DiraContextType {
   liquidationHealth: number;
   mintableHealth: number;
   collateralDenom: string;
+  isLoading: boolean;
+  isConnectionPrompted: boolean; // New state to signal attention
   lockCollateral: (amount: number) => Promise<void>;
   unlockCollateral: (amount: number) => Promise<void>;
   mintDira: (amount: number) => Promise<void>;
   returnDira: (amount: number) => Promise<void>;
-  isLoading: boolean;
   connectWallet: () => void;
 }
 
@@ -40,7 +41,7 @@ export function DiraProvider({ children }: { children: React.ReactNode }) {
   const [collateralDenom, setCollateralDenom] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isWalletPopupOpen, setIsWalletPopupOpen] = useState(false);
-  const [isConnectingWallet, setIsConnectingWallet] = useState(false);
+  const [isConnectionPrompted, setIsConnectionPrompted] = useState(false); // New state
 
   const pendingActionRef = useRef<(() => void) | null>(null);
 
@@ -83,10 +84,12 @@ export function DiraProvider({ children }: { children: React.ReactNode }) {
   }, [isConnected, fetchData]);
 
   const checkWalletConnection = (action: () => void): boolean => {
-    if (isConnectingWallet) return false;
     if (!isConnected) {
       setIsWalletPopupOpen(true);
       pendingActionRef.current = action;
+      // Trigger the attention state and reset it after a delay
+      setIsConnectionPrompted(true);
+      setTimeout(() => setIsConnectionPrompted(false), 2500);
       return false;
     }
     return true;
@@ -172,7 +175,8 @@ export function DiraProvider({ children }: { children: React.ReactNode }) {
         liquidationHealth, mintableHealth, collateralDenom,
         lockCollateral, unlockCollateral, mintDira, returnDira,
         isLoading,
-        connectWallet: connectWalletFromParent, // CORRECTLY EXPORT PARENT FUNCTION
+        isConnectionPrompted,
+        connectWallet: connectWalletFromParent,
       }}
     >
       <WalletConnectionPopup

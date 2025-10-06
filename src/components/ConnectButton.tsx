@@ -3,10 +3,10 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useWallet } from '@/context/WalletContext';
+import { useDira } from '@/context/DiraContext'; // Import useDira
 import { Button } from '@/components/Button';
 import { toast } from 'sonner';
 
-// A simple spinner component for the loading state
 const Spinner = () => (
   <svg className="animate-spin h-5 w-5 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -14,7 +14,6 @@ const Spinner = () => (
   </svg>
 );
 
-// The dropdown menu component
 function WalletDropdown({ address, onDisconnect, onClose }: { address: string; onDisconnect: () => void; onClose: () => void; }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -44,10 +43,13 @@ function WalletDropdown({ address, onDisconnect, onClose }: { address: string; o
   );
 }
 
-
 export function ConnectButton() {
   const { isConnected, isConnecting, address, connectWallet, disconnectWallet } = useWallet();
+  const { isConnectionPrompted } = useDira(); // Get the new state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Define a pulsing animation class
+  const attentionClass = isConnectionPrompted ? "animate-pulse-attention" : "";
 
   if (isConnected && address) {
     return (
@@ -71,8 +73,8 @@ export function ConnectButton() {
 
   return (
     <Button
-      variant="primary"
-      className="w-full md:w-full flex items-center justify-center gap-2"
+      variant={isConnectionPrompted ? 'secondary' : 'primary'} // Change variant based on prompt
+      className={`w-full md:w-full flex items-center justify-center gap-2 ${attentionClass}`}
       onClick={() => connectWallet()}
       disabled={isConnecting}
     >

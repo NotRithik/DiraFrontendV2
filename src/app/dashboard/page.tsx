@@ -9,23 +9,30 @@ import { PositionHealthBar } from "@/components/PositionHealthBar";
 import { ConnectButton } from "@/components/ConnectButton";
 import Decimal from "decimal.js";
 import { TransactionInput } from "@/components/TransactionInput";
+import { useDira } from "@/context/DiraContext";
+import { useWallet } from "@/context/WalletContext";
 
-// ... (HamburgerIcon and calculateHealth functions remain the same)
-const HamburgerIcon = () => (<svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="3" width="20" height="4" /><rect x="2" y="10" width="20" height="4" /><rect x="2" y="17" width="20" height="4" /></svg>);
+const HamburgerIcon = () => (
+    <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="3" width="20" height="4" /><rect x="2" y="10" width="20" height="4" /><rect x="2" y="17" width="20" height="4" /></svg>
+);
 const calculateHealth = (collateral: number, dira: number, omPrice: number, liquidationRatio: number, safeRatio: number) => { if (liquidationRatio >= safeRatio || omPrice <= 0) return { ratio: Infinity, percentage: 100 }; const collateralValue = new Decimal(collateral).mul(omPrice); const debtValue = new Decimal(dira); if (debtValue.isZero()) return { ratio: Infinity, percentage: 100 }; const currentRatio = collateralValue.div(debtValue); const percentage = currentRatio.sub(liquidationRatio).div(new Decimal(safeRatio).sub(liquidationRatio)).mul(100); return { ratio: currentRatio.toNumber(), percentage: Math.max(0, Math.min(100, percentage.toNumber())) }; };
 
 
 export default function DashboardPage() {
-    // --- Local State for UI Prototyping ---
-    const [confirmedLockedCollateral, setConfirmedLockedCollateral] = useState(120);
-    const [confirmedMintedDira, setConfirmedMintedDira] = useState(50);
-    const [walletOmBalance, setWalletOmBalance] = useState(80);
+    const {
+        lockedCollateral: confirmedLockedCollateral,
+        mintedDira: confirmedMintedDira,
+        walletOmBalance,
+        currentOmPrice,
+        liquidationHealth,
+        mintableHealth: safeHealth,
+        lockCollateral,
+        unlockCollateral,
+        mintDira,
+        returnDira,
+        isLoading,
+    } = useDira();
 
-    const currentOmPrice = 5.0;
-    const liquidationHealth = 1.5;
-    const safeHealth = 2.5;
-
-    // --- UI Interaction State ---
     const [collateralMode, setCollateralMode] = useState<'add' | 'remove'>('add');
     const [collateralAmount, setCollateralAmount] = useState('');
     const [sliderCollateralValue, setSliderCollateralValue] = useState(confirmedLockedCollateral);
@@ -34,29 +41,26 @@ export default function DashboardPage() {
     const [diraAmount, setDiraAmount] = useState('');
     const [sliderDiraValue, setSliderDiraValue] = useState(confirmedMintedDira);
 
-    // --- Derived Values ---
     const totalOmBalance = new Decimal(confirmedLockedCollateral).plus(walletOmBalance).toNumber();
     const maxMintableDira = safeHealth > 0 && currentOmPrice > 0 ? new Decimal(confirmedLockedCollateral).mul(currentOmPrice).div(safeHealth).toNumber() : 0;
     const maxUnlockableCollateral = (safeHealth > 0 && currentOmPrice > 0 && confirmedMintedDira > 0) ? Math.max(0, new Decimal(confirmedLockedCollateral).sub(new Decimal(confirmedMintedDira).mul(safeHealth).div(currentOmPrice)).toNumber()) : confirmedLockedCollateral;
 
-    // --- Sync Logic: Input -> Slider with VALIDATION ---
+    // Sync Input -> Slider
     useEffect(() => {
         const change = new Decimal(collateralAmount || 0);
         if (collateralMode === 'add') {
-            const maxChange = new Decimal(walletOmBalance);
-            const finalChange = Decimal.min(change, maxChange);
+            const finalChange = Decimal.min(change, new Decimal(walletOmBalance));
             setSliderCollateralValue(new Decimal(confirmedLockedCollateral).plus(finalChange).toNumber());
         } else {
-            const maxChange = new Decimal(maxUnlockableCollateral);
-            const finalChange = Decimal.min(change, maxChange);
+            const finalChange = Decimal.min(change, new Decimal(maxUnlockableCollateral));
             setSliderCollateralValue(new Decimal(confirmedLockedCollateral).sub(finalChange).toNumber());
         }
-    }, [collateralAmount, collateralMode, confirmedLockedCollateral, walletOmBalance, maxUnlockableCollateral]);
+    }, [collateralAmount, collateralMode]);
 
     useEffect(() => {
         const change = new Decimal(diraAmount || 0);
-        const maxMintChange = new Decimal(maxMintableDira).sub(confirmedMintedDira);
         if (diraMode === 'add') {
+            const maxMintChange = new Decimal(maxMintableDira).sub(confirmedMintedDira);
             const finalChange = Decimal.min(change, maxMintChange);
             setSliderDiraValue(new Decimal(confirmedMintedDira).plus(finalChange).toNumber());
         } else {
@@ -64,64 +68,45 @@ export default function DashboardPage() {
             const finalChange = Decimal.min(change, maxReturnChange);
             setSliderDiraValue(new Decimal(confirmedMintedDira).sub(finalChange).toNumber());
         }
-    }, [diraAmount, diraMode, confirmedMintedDira, maxMintableDira]);
+    }, [diraAmount, diraMode]);
 
-    // --- Sync Logic: Slider -> Input ---
+    // Sync Slider -> Input
     useEffect(() => {
         const diff = new Decimal(sliderCollateralValue).sub(confirmedLockedCollateral);
-        if (diff.abs().lessThan(0.01)) {
-            setCollateralAmount(''); return;
-        }
+        if (diff.abs().lessThan(0.01)) { setCollateralAmount(''); return; }
         setCollateralMode(diff.isPositive() ? 'add' : 'remove');
         setCollateralAmount(diff.abs().toDecimalPlaces(2).toString());
-    }, [sliderCollateralValue, confirmedLockedCollateral]);
+    }, [sliderCollateralValue]);
 
     useEffect(() => {
         const diff = new Decimal(sliderDiraValue).sub(confirmedMintedDira);
-        if (diff.abs().lessThan(0.01)) {
-            setDiraAmount(''); return;
-        }
+        if (diff.abs().lessThan(0.01)) { setDiraAmount(''); return; }
         setDiraMode(diff.isPositive() ? 'add' : 'remove');
         setDiraAmount(diff.abs().toDecimalPlaces(2).toString());
-    }, [sliderDiraValue, confirmedMintedDira]);
+    }, [sliderDiraValue]);
 
-    // --- Health Calculation ---
-    const [currentHealthPercentage, setCurrentHealthPercentage] = useState(0);
-    const [previewHealthPercentage, setPreviewHealthPercentage] = useState(0);
-    const [previewCollateralizationRatio, setPreviewCollateralizationRatio] = useState(0);
+    // Reset sliders when confirmed values change
+    useEffect(() => { setSliderCollateralValue(confirmedLockedCollateral); }, [confirmedLockedCollateral]);
+    useEffect(() => { setSliderDiraValue(confirmedMintedDira); }, [confirmedMintedDira]);
 
-    useEffect(() => {
-        const { percentage } = calculateHealth(confirmedLockedCollateral, confirmedMintedDira, currentOmPrice, liquidationHealth, safeHealth);
-        setCurrentHealthPercentage(percentage);
-        const { ratio, percentage: previewPerc } = calculateHealth(sliderCollateralValue, sliderDiraValue, currentOmPrice, liquidationHealth, safeHealth);
-        setPreviewHealthPercentage(previewPerc);
-        setPreviewCollateralizationRatio(ratio);
-    }, [sliderCollateralValue, sliderDiraValue, confirmedLockedCollateral, confirmedMintedDira]);
-
+    const { percentage: currentHealthPercentage } = calculateHealth(confirmedLockedCollateral, confirmedMintedDira, currentOmPrice, liquidationHealth, safeHealth);
+    const { ratio: previewCollateralizationRatio, percentage: previewHealthPercentage } = calculateHealth(sliderCollateralValue, sliderDiraValue, currentOmPrice, liquidationHealth, safeHealth);
+    
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    // --- "Apply" Handlers ---
     const handleApplyCollateral = () => {
         const amount = new Decimal(collateralAmount || 0);
-        if (amount.isZero()) return;
-        if (collateralMode === 'add') {
-            setConfirmedLockedCollateral(prev => new Decimal(prev).plus(amount).toNumber());
-            setWalletOmBalance(prev => new Decimal(prev).sub(amount).toNumber());
-        } else {
-            setConfirmedLockedCollateral(prev => new Decimal(prev).sub(amount).toNumber());
-            setWalletOmBalance(prev => new Decimal(prev).plus(amount).toNumber());
-        }
+        if (amount.isZero() || isLoading) return;
+        if (collateralMode === 'add') lockCollateral(amount.toNumber());
+        else unlockCollateral(amount.toNumber());
         setCollateralAmount('');
     };
 
     const handleApplyDira = () => {
         const amount = new Decimal(diraAmount || 0);
-        if (amount.isZero()) return;
-        if (diraMode === 'add') {
-            setConfirmedMintedDira(prev => new Decimal(prev).plus(amount).toNumber());
-        } else {
-            setConfirmedMintedDira(prev => new Decimal(prev).sub(amount).toNumber());
-        }
+        if (amount.isZero() || isLoading) return;
+        if (diraMode === 'add') mintDira(amount.toNumber());
+        else returnDira(amount.toNumber());
         setDiraAmount('');
     };
 
@@ -153,9 +138,7 @@ export default function DashboardPage() {
                         <div className="mt-auto pt-6 space-y-4">
                             <TransactionInput mode={collateralMode} onModeChange={setCollateralMode} amount={collateralAmount} onAmountChange={setCollateralAmount} addLabel="Lock" removeLabel="Unlock" unit="OM" maxAmount={maxUnlockableCollateral} balance={walletOmBalance} variant="yellow" />
                             <InteractiveProgressBar currentValue={confirmedLockedCollateral} sliderValue={sliderCollateralValue} maxValue={totalOmBalance} onValueChange={setSliderCollateralValue} baseColor="bg-black" previewAddColor="bg-orange-500" previewRemoveColor="bg-gray-400" />
-                            <Button variant="white" className="w-full md:w-full" onClick={handleApplyCollateral} disabled={numericCollateralAmount <= 0}>
-                                {numericCollateralAmount > 0 ? `${collateralMode === 'add' ? 'Lock' : 'Unlock'} ${collateralAmount} OM` : 'Apply'}
-                            </Button>
+                            <Button variant="white" className="w-full md:w-full" onClick={handleApplyCollateral} disabled={numericCollateralAmount <= 0 || isLoading}>{isLoading ? "Processing..." : numericCollateralAmount > 0 ? `${collateralMode === 'add' ? 'Lock' : 'Unlock'} ${collateralAmount} OM` : 'Apply'}</Button>
                         </div>
                     </div>
 
@@ -170,9 +153,7 @@ export default function DashboardPage() {
                         <div className="mt-auto pt-6 space-y-4">
                             <TransactionInput mode={diraMode} onModeChange={setDiraMode} amount={diraAmount} onAmountChange={setDiraAmount} addLabel="Mint" removeLabel="Return" unit="Dira" maxAmount={confirmedMintedDira} balance={Math.max(0, maxMintableDira - confirmedMintedDira)} variant="orange" />
                             <InteractiveProgressBar currentValue={confirmedMintedDira} sliderValue={sliderDiraValue} maxValue={maxMintableDira} onValueChange={setSliderDiraValue} baseColor="bg-black" previewAddColor="bg-yellow-400" previewRemoveColor="bg-gray-400" />
-                            <Button variant="white" className="w-full md:w-full" onClick={handleApplyDira} disabled={numericDiraAmount <= 0}>
-                                {numericDiraAmount > 0 ? `${diraMode === 'add' ? 'Mint' : 'Return'} ${diraAmount} Dira` : 'Apply'}
-                            </Button>
+                            <Button variant="white" className="w-full md:w-full" onClick={handleApplyDira} disabled={numericDiraAmount <= 0 || isLoading}>{isLoading ? "Processing..." : numericDiraAmount > 0 ? `${diraMode === 'add' ? 'Mint' : 'Return'} ${diraAmount} Dira` : 'Apply'}</Button>
                         </div>
                     </div>
                 </div>
@@ -182,10 +163,7 @@ export default function DashboardPage() {
                     <p className="mt-2 text-xl font-sans">
                         Collateralization: {isFinite(previewCollateralizationRatio) ? `${(previewCollateralizationRatio * 100).toFixed(0)}%` : 'N/A'}
                     </p>
-                    <PositionHealthBar
-                        currentHealth={currentHealthPercentage}
-                        previewHealth={previewHealthPercentage}
-                    />
+                    <PositionHealthBar currentHealth={currentHealthPercentage} previewHealth={previewHealthPercentage} />
                 </div>
             </main>
         </div>
