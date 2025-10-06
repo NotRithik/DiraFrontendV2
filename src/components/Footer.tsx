@@ -38,7 +38,7 @@ export default function Footer() {
       <div className="border-t border-white/20">
         <div className="max-w-6xl mx-auto px-8 md:px-16 py-4 flex flex-col md:flex-row justify-between items-center text-sm text-white/60">
           <p>© {new Date().getFullYear()} Dira Foundation</p>
-          <p>Contact: contact@dira.foundation</p>
+          <p className="select-text">Contact: contact@dira.foundation</p>
         </div>
       </div>
     </footer>
