@@ -20,8 +20,8 @@ export default function HomePage() {
     <div className="bg-[#FDF8F2] text-black h-screen overflow-y-scroll snap-y snap-mandatory font-sans">
 
       {/* Hero Section - Slide 1 */}
-      <section className="bg-orange-600 text-white h-screen flex flex-col justify-center snap-start">
-        <div className="max-w-6xl mx-auto px-8 md:px-16 w-full">
+      <section className="min-h-screen flex flex-col justify-center snap-start bg-orange-600 text-white">
+        <div className="max-w-6xl mx-auto px-8 md:px-16 w-full py-16 md:py-0">
           <h1 className="text-[4rem] md:text-[7rem] font-extrabold uppercase leading-none">
             Dira
           </h1>
@@ -43,17 +43,17 @@ export default function HomePage() {
       </section>
 
       {/* Manifesto Part 1 - Slide 2 */}
-      <section id="manifesto" className="h-screen flex flex-col md:flex-row snap-start border-t-8 border-black">
-        <div className="bg-black flex-shrink-0 flex items-center justify-center md:border-r-8 border-black h-1/2 md:h-full w-full md:w-auto">
+      <section id="manifesto" className="flex flex-col md:h-screen md:flex-row snap-start border-t-8 border-black">
+        <div className="md:w-1/2 md:border-r-8 border-black">
           <img
             src="/assets/brutalist_dubai.png"
             alt="Brutalist Dubai Illustration"
-            className="h-full w-auto object-contain"
+            className="w-full h-full object-cover"
           />
         </div>
-        <div className="bg-white text-black flex-grow flex items-center">
+        <div className="bg-white text-black flex-grow flex items-center md:w-1/2">
           <div className="w-full px-8 md:px-16 py-16">
-            <div className="max-w-xl space-y-16">
+            <div className="max-w-xl space-y-12 md:space-y-16">
               <div>
                 <h3 className="text-3xl md:text-4xl font-extrabold uppercase leading-tight">
                   Stability in a Volatile World
@@ -81,8 +81,8 @@ export default function HomePage() {
 
       {/* Combined Final Section - Slide 3 */}
       <section className="min-h-screen flex flex-col snap-start border-t-8 border-black">
-        <div className="bg-yellow-400 text-black flex-grow flex flex-col justify-center items-center p-8 md:p-16">
-          <div className="max-w-4xl w-full text-center">
+        <div className="bg-yellow-400 text-black flex-grow flex flex-col justify-center items-center p-8">
+          <div className="max-w-4xl w-full text-center py-16 md:py-0">
             <div>
               <h2 className="text-5xl md:text-7xl font-extrabold uppercase leading-tight">
                 On-Chain
