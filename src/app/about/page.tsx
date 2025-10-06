@@ -109,7 +109,7 @@ export default function AboutPage() {
       </section>
 
       <section id="join" className="snap-start min-h-screen flex flex-col border-t-8 border-black" aria-label="Join the future">
-        <div className="bg-yellow-400 text-black flex-grow flex items-center justify-center px-6 md:px-12">
+        <div className="bg-yellow-400 text-black flex-grow flex items-center justify-center px-6 py-16 md:py-12">
           <div className="max-w-4xl text-center space-y-8">
             <h2 className="text-5xl md:text-8xl font-extrabold uppercase leading-tight">Join the Future</h2>
             <p className="text-xl md:text-2xl text-black/85">Become part of the new economy — explore the protocol, test the flows, and join our community.</p>
