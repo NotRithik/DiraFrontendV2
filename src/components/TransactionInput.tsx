@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { Button } from './Button';
-import Decimal from 'decimal.js'; // Import Decimal.js for precise comparisons
+import Decimal from 'decimal.js';
 
 interface TransactionInputProps {
   mode: 'add' | 'remove';
@@ -16,6 +16,7 @@ interface TransactionInputProps {
   maxAmount: number;
   balance: number;
   variant: 'yellow' | 'orange';
+  precision: number; // New prop for precision
 }
 
 export function TransactionInput({
@@ -28,36 +29,40 @@ export function TransactionInput({
   maxAmount,
   balance,
   variant,
+  precision,
 }: TransactionInputProps) {
   const isAdd = mode === 'add';
 
   const handleSetMax = () => {
-    onAmountChange(String(isAdd ? balance : maxAmount));
+    const max = isAdd ? balance : maxAmount;
+    onAmountChange(new Decimal(max).toFixed(precision));
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    
-    // 1. Allow only valid numeric characters (numbers and one decimal)
-    if (!/^[0-9]*\.?[0-9]*$/.test(value)) {
-      return; // Exit if invalid characters are typed
+
+    if (value && !/^[0-9]*\.?[0-9]*$/.test(value)) {
+      return;
     }
 
-    // 2. Enforce maximum value limit
+    if (value.includes('.')) {
+        const decimalPart = value.split('.')[1];
+        if (decimalPart && decimalPart.length > precision) {
+            return; // Block input if it exceeds precision
+        }
+    }
+
     try {
-      const numericValue = new Decimal(value || 0);
-      const limit = new Decimal(isAdd ? balance : maxAmount);
+      if (value) {
+        const numericValue = new Decimal(value);
+        const limit = new Decimal(isAdd ? balance : maxAmount);
 
-      if (numericValue.greaterThan(limit)) {
-        // If user types a number larger than the max, do not update the state.
-        // This effectively stops them from typing anything larger.
-        // You could also optionally set the value to the max here:
-        // onAmountChange(limit.toString());
-        return; 
+        if (numericValue.greaterThan(limit)) {
+          onAmountChange(limit.toFixed(precision));
+          return;
+        }
       }
-    } catch (error) {
-      // Ignore errors from invalid intermediate states like "12."
-    }
+    } catch (error) {}
 
     onAmountChange(value);
   };
@@ -71,13 +76,13 @@ export function TransactionInput({
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => onModeChange('add')}
-          className={`py-2 text-center uppercase font-bold border-4 cursor-pointer ${borderColor} ${isAdd ? (variant === 'yellow' ? 'bg-black text-yellow-400' : 'bg-white text-orange-600') : ''}`}
+          className={`py-2 text-center uppercase font-bold border-4 ${borderColor} ${isAdd ? (variant === 'yellow' ? 'bg-black text-yellow-400' : 'bg-white text-orange-600') : ''}`}
         >
           {addLabel}
         </button>
         <button
           onClick={() => onModeChange('remove')}
-          className={`py-2 text-center uppercase font-bold border-4 cursor-pointer ${borderColor} ${!isAdd ? (variant === 'yellow' ? 'bg-black text-yellow-400' : 'bg-white text-orange-600') : ''}`}
+          className={`py-2 text-center uppercase font-bold border-4 ${borderColor} ${!isAdd ? (variant === 'yellow' ? 'bg-black text-yellow-400' : 'bg-white text-orange-600') : ''}`}
         >
           {removeLabel}
         </button>

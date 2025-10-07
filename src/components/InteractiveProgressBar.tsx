@@ -31,7 +31,10 @@ export function InteractiveProgressBar({
         const rect = barRef.current.getBoundingClientRect();
         const x = clientX - rect.left;
         const percentage = Math.max(0, Math.min(1, x / rect.width));
-        const newValue = Math.round(percentage * maxValue);
+        
+        // --- FIX: Remove Math.round to allow for floating-point values ---
+        const newValue = percentage * maxValue; 
+        
         onValueChange(newValue);
     }, [maxValue, onValueChange]);
 
@@ -70,7 +73,6 @@ export function InteractiveProgressBar({
     const removeWidth = sliderValue < currentValue ? ((currentValue - sliderValue) / maxValue) * 100 : 0;
     const removeLeft = (sliderValue / maxValue) * 100;
     
-    // New logic for the divider's position
     const dividerPosition = Math.max(sliderValue, currentValue);
     const showDivider = sliderValue !== currentValue && dividerPosition > 0 && dividerPosition < maxValue;
 
@@ -89,7 +91,6 @@ export function InteractiveProgressBar({
                 <div className={`h-full absolute ${previewRemoveColor}`} style={{ left: `${removeLeft}%`, width: `${removeWidth}%` }} />
             )}
 
-            {/* Vertical Divider Line with new position logic */}
             {showDivider && (
                 <div 
                     className="absolute h-full w-1 bg-black z-10"

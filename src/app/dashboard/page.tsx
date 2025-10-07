@@ -12,6 +12,8 @@ import { TransactionInput } from "@/components/TransactionInput";
 import { useDira } from "@/context/DiraContext";
 import { useWallet } from "@/context/WalletContext";
 
+const DECIMAL_PRECISION = 6;
+
 const HamburgerIcon = () => (
     <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="3" width="20" height="4" /><rect x="2" y="10" width="20" height="4" /><rect x="2" y="17" width="20" height="4" /></svg>
 );
@@ -19,6 +21,7 @@ const calculateHealth = (collateral: number, dira: number, omPrice: number, liqu
 
 
 export default function DashboardPage() {
+    const { isConnected } = useWallet();
     const {
         lockedCollateral: confirmedLockedCollateral,
         mintedDira: confirmedMintedDira,
@@ -45,49 +48,86 @@ export default function DashboardPage() {
     const maxMintableDira = safeHealth > 0 && currentOmPrice > 0 ? new Decimal(confirmedLockedCollateral).mul(currentOmPrice).div(safeHealth).toNumber() : 0;
     const maxUnlockableCollateral = (safeHealth > 0 && currentOmPrice > 0 && confirmedMintedDira > 0) ? Math.max(0, new Decimal(confirmedLockedCollateral).sub(new Decimal(confirmedMintedDira).mul(safeHealth).div(currentOmPrice)).toNumber()) : confirmedLockedCollateral;
 
-    // Sync Input -> Slider
     useEffect(() => {
-        const change = new Decimal(collateralAmount || 0);
-        if (collateralMode === 'add') {
-            const finalChange = Decimal.min(change, new Decimal(walletOmBalance));
-            setSliderCollateralValue(new Decimal(confirmedLockedCollateral).plus(finalChange).toNumber());
-        } else {
-            const finalChange = Decimal.min(change, new Decimal(maxUnlockableCollateral));
-            setSliderCollateralValue(new Decimal(confirmedLockedCollateral).sub(finalChange).toNumber());
+        setSliderCollateralValue(confirmedLockedCollateral);
+        setCollateralAmount('');
+    }, [confirmedLockedCollateral]);
+
+    useEffect(() => {
+        setSliderDiraValue(confirmedMintedDira);
+        setDiraAmount('');
+    }, [confirmedMintedDira]);
+
+    const updateCollateralSlider = (amount: string, mode: 'add' | 'remove') => {
+        const change = new Decimal(amount || 0);
+        const newSliderValue = mode === 'add' ? new Decimal(confirmedLockedCollateral).plus(change) : new Decimal(confirmedLockedCollateral).sub(change);
+        setSliderCollateralValue(newSliderValue.toNumber());
+    };
+
+    const handleCollateralAmountChange = (amount: string) => {
+        setCollateralAmount(amount);
+        updateCollateralSlider(amount, collateralMode);
+    };
+
+    const handleSliderCollateralChange = (value: number) => {
+        const diff = new Decimal(value).sub(confirmedLockedCollateral);
+        const newMode = diff.isPositive() ? 'add' : 'remove';
+        if (collateralMode !== newMode) {
+          setCollateralMode(newMode);
         }
-    }, [collateralAmount, collateralMode]);
+        setCollateralAmount(diff.abs().toDecimalPlaces(DECIMAL_PRECISION).toString());
+        setSliderCollateralValue(value);
+    };
+    
+    const handleCollateralModeChange = (newMode: 'add' | 'remove') => {
+        setCollateralMode(newMode);
+        const currentAmount = new Decimal(collateralAmount || 0);
+        if (currentAmount.isZero()) return;
+        const limit = newMode === 'add' ? new Decimal(walletOmBalance) : new Decimal(maxUnlockableCollateral);
 
-    useEffect(() => {
-        const change = new Decimal(diraAmount || 0);
-        if (diraMode === 'add') {
-            const maxMintChange = new Decimal(maxMintableDira).sub(confirmedMintedDira);
-            const finalChange = Decimal.min(change, maxMintChange);
-            setSliderDiraValue(new Decimal(confirmedMintedDira).plus(finalChange).toNumber());
+        if (currentAmount.greaterThan(limit)) {
+            const clampedStr = limit.toDecimalPlaces(DECIMAL_PRECISION).toString();
+            setCollateralAmount(clampedStr);
+            updateCollateralSlider(clampedStr, newMode);
         } else {
-            const maxReturnChange = new Decimal(confirmedMintedDira);
-            const finalChange = Decimal.min(change, maxReturnChange);
-            setSliderDiraValue(new Decimal(confirmedMintedDira).sub(finalChange).toNumber());
+            updateCollateralSlider(collateralAmount, newMode);
         }
-    }, [diraAmount, diraMode]);
+    };
+    
+    const updateDiraSlider = (amount: string, mode: 'add' | 'remove') => {
+        const change = new Decimal(amount || 0);
+        const newSliderValue = mode === 'add' ? new Decimal(confirmedMintedDira).plus(change) : new Decimal(confirmedMintedDira).sub(change);
+        setSliderDiraValue(newSliderValue.toNumber());
+    };
 
-    // Sync Slider -> Input
-    useEffect(() => {
-        const diff = new Decimal(sliderCollateralValue).sub(confirmedLockedCollateral);
-        if (diff.abs().lessThan(0.01)) { setCollateralAmount(''); return; }
-        setCollateralMode(diff.isPositive() ? 'add' : 'remove');
-        setCollateralAmount(diff.abs().toDecimalPlaces(2).toString());
-    }, [sliderCollateralValue]);
+    const handleDiraAmountChange = (amount: string) => {
+        setDiraAmount(amount);
+        updateDiraSlider(amount, diraMode);
+    };
+    
+    const handleSliderDiraChange = (value: number) => {
+        const diff = new Decimal(value).sub(confirmedMintedDira);
+        const newMode = diff.isPositive() ? 'add' : 'remove';
+        if (diraMode !== newMode) {
+            setDiraMode(newMode);
+        }
+        setDiraAmount(diff.abs().toDecimalPlaces(DECIMAL_PRECISION).toString());
+        setSliderDiraValue(value);
+    };
+    
+    const handleDiraModeChange = (newMode: 'add' | 'remove') => {
+        setDiraMode(newMode);
+        const currentAmount = new Decimal(diraAmount || 0);
+        const limit = newMode === 'add' ? new Decimal(maxMintableDira).sub(confirmedMintedDira) : new Decimal(confirmedMintedDira);
 
-    useEffect(() => {
-        const diff = new Decimal(sliderDiraValue).sub(confirmedMintedDira);
-        if (diff.abs().lessThan(0.01)) { setDiraAmount(''); return; }
-        setDiraMode(diff.isPositive() ? 'add' : 'remove');
-        setDiraAmount(diff.abs().toDecimalPlaces(2).toString());
-    }, [sliderDiraValue]);
-
-    // Reset sliders when confirmed values change
-    useEffect(() => { setSliderCollateralValue(confirmedLockedCollateral); }, [confirmedLockedCollateral]);
-    useEffect(() => { setSliderDiraValue(confirmedMintedDira); }, [confirmedMintedDira]);
+        if (currentAmount.greaterThan(limit)) {
+            const clampedStr = limit.toDecimalPlaces(DECIMAL_PRECISION).toString();
+            setDiraAmount(clampedStr);
+            updateDiraSlider(clampedStr, newMode);
+        } else {
+            updateDiraSlider(diraAmount, newMode);
+        }
+    };
 
     const { percentage: currentHealthPercentage } = calculateHealth(confirmedLockedCollateral, confirmedMintedDira, currentOmPrice, liquidationHealth, safeHealth);
     const { ratio: previewCollateralizationRatio, percentage: previewHealthPercentage } = calculateHealth(sliderCollateralValue, sliderDiraValue, currentOmPrice, liquidationHealth, safeHealth);
@@ -99,7 +139,6 @@ export default function DashboardPage() {
         if (amount.isZero() || isLoading) return;
         if (collateralMode === 'add') lockCollateral(amount.toNumber());
         else unlockCollateral(amount.toNumber());
-        setCollateralAmount('');
     };
 
     const handleApplyDira = () => {
@@ -107,7 +146,6 @@ export default function DashboardPage() {
         if (amount.isZero() || isLoading) return;
         if (diraMode === 'add') mintDira(amount.toNumber());
         else returnDira(amount.toNumber());
-        setDiraAmount('');
     };
 
     const numericCollateralAmount = parseFloat(collateralAmount) || 0;
@@ -126,6 +164,13 @@ export default function DashboardPage() {
             </nav>
 
             <main className="max-w-6xl mx-auto px-8 md:px-16 py-12 flex flex-col gap-12">
+                {!isConnected && (
+                    <div className="border-8 border-black bg-white p-8 shadow-[8px_8px_0_#000] text-center">
+                        <h2 className="text-3xl md:text-4xl font-extrabold uppercase">Welcome to Dira</h2>
+                        <p className="mt-4 text-lg font-sans">Connect your wallet to manage your collateral, mint Dira, and view your position.</p>
+                        <div className="mt-6 max-w-xs mx-auto"><ConnectButton/></div>
+                    </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                     <div className="border-8 border-black bg-yellow-400 p-8 flex flex-col justify-between shadow-[8px_8px_0_#000]">
                         <div>
@@ -136,9 +181,9 @@ export default function DashboardPage() {
                             </div>
                         </div>
                         <div className="mt-auto pt-6 space-y-4">
-                            <TransactionInput mode={collateralMode} onModeChange={setCollateralMode} amount={collateralAmount} onAmountChange={setCollateralAmount} addLabel="Lock" removeLabel="Unlock" unit="OM" maxAmount={maxUnlockableCollateral} balance={walletOmBalance} variant="yellow" />
-                            <InteractiveProgressBar currentValue={confirmedLockedCollateral} sliderValue={sliderCollateralValue} maxValue={totalOmBalance} onValueChange={setSliderCollateralValue} baseColor="bg-black" previewAddColor="bg-orange-500" previewRemoveColor="bg-gray-400" />
-                            <Button variant="white" className="w-full md:w-full" onClick={handleApplyCollateral} disabled={numericCollateralAmount <= 0 || isLoading}>{isLoading ? "Processing..." : numericCollateralAmount > 0 ? `${collateralMode === 'add' ? 'Lock' : 'Unlock'} ${collateralAmount} OM` : 'Apply'}</Button>
+                            <TransactionInput precision={DECIMAL_PRECISION} mode={collateralMode} onModeChange={handleCollateralModeChange} amount={collateralAmount} onAmountChange={handleCollateralAmountChange} addLabel="Lock" removeLabel="Unlock" unit="OM" maxAmount={maxUnlockableCollateral} balance={walletOmBalance} variant="yellow" />
+                            <InteractiveProgressBar currentValue={confirmedLockedCollateral} sliderValue={sliderCollateralValue} maxValue={totalOmBalance} onValueChange={handleSliderCollateralChange} baseColor="bg-black" previewAddColor="bg-orange-500" previewRemoveColor="bg-gray-400" />
+                            <Button variant="white" className="w-full md:w-full disabled:cursor-not-allowed" onClick={handleApplyCollateral} disabled={numericCollateralAmount <= 0 || isLoading || !isConnected}>{isLoading ? "Processing..." : numericCollateralAmount > 0 ? `${collateralMode === 'add' ? 'Lock' : 'Unlock'} ${collateralAmount} OM` : 'Apply'}</Button>
                         </div>
                     </div>
 
@@ -151,9 +196,9 @@ export default function DashboardPage() {
                             </div>
                         </div>
                         <div className="mt-auto pt-6 space-y-4">
-                            <TransactionInput mode={diraMode} onModeChange={setDiraMode} amount={diraAmount} onAmountChange={setDiraAmount} addLabel="Mint" removeLabel="Return" unit="Dira" maxAmount={confirmedMintedDira} balance={Math.max(0, maxMintableDira - confirmedMintedDira)} variant="orange" />
-                            <InteractiveProgressBar currentValue={confirmedMintedDira} sliderValue={sliderDiraValue} maxValue={maxMintableDira} onValueChange={setSliderDiraValue} baseColor="bg-black" previewAddColor="bg-yellow-400" previewRemoveColor="bg-gray-400" />
-                            <Button variant="white" className="w-full md:w-full" onClick={handleApplyDira} disabled={numericDiraAmount <= 0 || isLoading}>{isLoading ? "Processing..." : numericDiraAmount > 0 ? `${diraMode === 'add' ? 'Mint' : 'Return'} ${diraAmount} Dira` : 'Apply'}</Button>
+                            <TransactionInput precision={DECIMAL_PRECISION} mode={diraMode} onModeChange={handleDiraModeChange} amount={diraAmount} onAmountChange={handleDiraAmountChange} addLabel="Mint" removeLabel="Return" unit="Dira" maxAmount={confirmedMintedDira} balance={Math.max(0, maxMintableDira - confirmedMintedDira)} variant="orange" />
+                            <InteractiveProgressBar currentValue={confirmedMintedDira} sliderValue={sliderDiraValue} maxValue={maxMintableDira} onValueChange={handleSliderDiraChange} baseColor="bg-black" previewAddColor="bg-yellow-400" previewRemoveColor="bg-gray-400" />
+                            <Button variant="white" className="w-full md:w-full disabled:cursor-not-allowed" onClick={handleApplyDira} disabled={numericDiraAmount <= 0 || isLoading || !isConnected}>{isLoading ? "Processing..." : numericDiraAmount > 0 ? `${diraMode === 'add' ? 'Mint' : 'Return'} ${diraAmount} Dira` : 'Apply'}</Button>
                         </div>
                     </div>
                 </div>
