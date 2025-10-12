@@ -9,6 +9,7 @@ import { PositionHealthBar } from "@/components/PositionHealthBar";
 import { ConnectButton } from "@/components/ConnectButton";
 import Decimal from "decimal.js";
 import { TransactionInput } from "@/components/TransactionInput";
+import { AsciiDiff } from "@/components/AsciiDiff";
 import { useDira } from "@/context/DiraContext";
 import { useWallet } from "@/context/WalletContext";
 
@@ -72,10 +73,9 @@ export default function DashboardPage() {
     const handleSliderCollateralChange = (value: number) => {
         const diff = new Decimal(value).sub(confirmedLockedCollateral);
         const newMode = diff.isPositive() ? 'add' : 'remove';
-        if (collateralMode !== newMode) {
-          setCollateralMode(newMode);
-        }
-        setCollateralAmount(diff.abs().toDecimalPlaces(DECIMAL_PRECISION).toString());
+        if (collateralMode !== newMode) setCollateralMode(newMode);
+        
+        setCollateralAmount(diff.abs().toFixed(DECIMAL_PRECISION));
         setSliderCollateralValue(value);
     };
     
@@ -86,7 +86,7 @@ export default function DashboardPage() {
         const limit = newMode === 'add' ? new Decimal(walletOmBalance) : new Decimal(maxUnlockableCollateral);
 
         if (currentAmount.greaterThan(limit)) {
-            const clampedStr = limit.toDecimalPlaces(DECIMAL_PRECISION).toString();
+            const clampedStr = limit.toFixed(DECIMAL_PRECISION);
             setCollateralAmount(clampedStr);
             updateCollateralSlider(clampedStr, newMode);
         } else {
@@ -108,10 +108,9 @@ export default function DashboardPage() {
     const handleSliderDiraChange = (value: number) => {
         const diff = new Decimal(value).sub(confirmedMintedDira);
         const newMode = diff.isPositive() ? 'add' : 'remove';
-        if (diraMode !== newMode) {
-            setDiraMode(newMode);
-        }
-        setDiraAmount(diff.abs().toDecimalPlaces(DECIMAL_PRECISION).toString());
+        if (diraMode !== newMode) setDiraMode(newMode);
+        
+        setDiraAmount(diff.abs().toFixed(DECIMAL_PRECISION));
         setSliderDiraValue(value);
     };
     
@@ -121,7 +120,7 @@ export default function DashboardPage() {
         const limit = newMode === 'add' ? new Decimal(maxMintableDira).sub(confirmedMintedDira) : new Decimal(confirmedMintedDira);
 
         if (currentAmount.greaterThan(limit)) {
-            const clampedStr = limit.toDecimalPlaces(DECIMAL_PRECISION).toString();
+            const clampedStr = limit.toFixed(DECIMAL_PRECISION);
             setDiraAmount(clampedStr);
             updateDiraSlider(clampedStr, newMode);
         } else {
@@ -175,9 +174,9 @@ export default function DashboardPage() {
                     <div className="border-8 border-black bg-yellow-400 p-8 flex flex-col justify-between shadow-[8px_8px_0_#000]">
                         <div>
                             <h2 className="text-3xl md:text-4xl font-extrabold uppercase">Collateral (OM)</h2>
-                            <div className="mt-6 space-y-4">
-                                <p className="font-sans text-xl">Locked: {confirmedLockedCollateral.toFixed(2)} OM</p>
-                                <p className="font-sans text-xl">Wallet Balance: {walletOmBalance.toFixed(2)} OM</p>
+                            <div className="mt-6 space-y-2">
+                                <AsciiDiff label="Locked" valueBefore={confirmedLockedCollateral} valueAfter={sliderCollateralValue} unit="OM" variant="yellow" />
+                                <AsciiDiff label="Wallet" valueBefore={walletOmBalance} valueAfter={new Decimal(walletOmBalance).minus(new Decimal(sliderCollateralValue).sub(confirmedLockedCollateral)).toNumber()} unit="OM" variant="yellow" />
                             </div>
                         </div>
                         <div className="mt-auto pt-6 space-y-4">
@@ -190,9 +189,9 @@ export default function DashboardPage() {
                     <div className="border-8 border-black bg-orange-600 p-8 flex flex-col justify-between shadow-[8px_8px_0_#000] text-white">
                         <div>
                             <h2 className="text-3xl md:text-4xl font-extrabold uppercase">Dira (AED)</h2>
-                            <div className="mt-6 space-y-4">
-                                <p className="font-sans text-xl">Minted: {confirmedMintedDira.toFixed(2)} Dira</p>
-                                <p className="font-sans text-xl">Mintable: {Math.max(0, maxMintableDira - confirmedMintedDira).toFixed(2)} Dira</p>
+                            <div className="mt-6 space-y-2">
+                                <AsciiDiff label="Minted" valueBefore={confirmedMintedDira} valueAfter={sliderDiraValue} unit="Dira" variant="orange" />
+                                <AsciiDiff label="Mintable" valueBefore={Math.max(0, maxMintableDira - confirmedMintedDira)} valueAfter={Math.max(0, maxMintableDira - sliderDiraValue)} unit="Dira" variant="orange" />
                             </div>
                         </div>
                         <div className="mt-auto pt-6 space-y-4">
