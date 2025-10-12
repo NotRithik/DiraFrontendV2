@@ -20,7 +20,7 @@ interface DiraContextType {
   mintableHealth: number;
   collateralDenom: string;
   isLoading: boolean;
-  isConnectionPrompted: boolean; // New state to signal attention
+  isConnectionPrompted: boolean;
   lockCollateral: (amount: number) => Promise<void>;
   unlockCollateral: (amount: number) => Promise<void>;
   mintDira: (amount: number) => Promise<void>;
@@ -41,7 +41,7 @@ export function DiraProvider({ children }: { children: React.ReactNode }) {
   const [collateralDenom, setCollateralDenom] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isWalletPopupOpen, setIsWalletPopupOpen] = useState(false);
-  const [isConnectionPrompted, setIsConnectionPrompted] = useState(false); // New state
+  const [isConnectionPrompted, setIsConnectionPrompted] = useState(false);
 
   const pendingActionRef = useRef<(() => void) | null>(null);
 
@@ -87,7 +87,6 @@ export function DiraProvider({ children }: { children: React.ReactNode }) {
     if (!isConnected) {
       setIsWalletPopupOpen(true);
       pendingActionRef.current = action;
-      // Trigger the attention state and reset it after a delay
       setIsConnectionPrompted(true);
       setTimeout(() => setIsConnectionPrompted(false), 2500);
       return false;
@@ -124,7 +123,10 @@ export function DiraProvider({ children }: { children: React.ReactNode }) {
   }, [connectWalletFromParent]);
 
   const lockCollateral = async (amount: number) => {
-    if (amount <= 0) return toast.error("Amount must be greater than 0");
+    if (amount <= 0) {
+      toast.error("Amount must be greater than 0");
+      return;
+    }
     const amountInMicroOM = new Decimal(amount).mul(1e6);
     const message: ExecuteMsg = { lock_collateral: {} };
     const funds = [{ denom: collateralDenom, amount: amountInMicroOM.toString() }];
@@ -132,19 +134,28 @@ export function DiraProvider({ children }: { children: React.ReactNode }) {
   };
 
   const unlockCollateral = async (amount: number) => {
-    if (amount <= 0) return toast.error("Amount must be greater than 0");
+    if (amount <= 0) {
+      toast.error("Amount must be greater than 0");
+      return;
+    }
     const message: ExecuteMsg = { unlock_collateral: { collateral_amount_to_unlock: new Decimal(amount).toString() } };
     await executeContract(message);
   };
 
   const mintDira = async (amount: number) => {
-    if (amount <= 0) return toast.error("Amount must be greater than 0");
+    if (amount <= 0) {
+      toast.error("Amount must be greater than 0");
+      return;
+    }
     const message: ExecuteMsg = { mint_dira: { dira_to_mint: new Decimal(amount).toString() } };
     await executeContract(message);
   };
 
   const returnDira = async (amount: number) => {
-    if (amount <= 0) return toast.error("Amount must be greater than 0");
+    if (amount <= 0) {
+      toast.error("Amount must be greater than 0");
+      return;
+    }
     const increaseAllowanceMsg = {
       increase_allowance: { spender: contractAddress, amount: new Decimal(amount).mul(1e6).toFixed(0), expires: { never: {} } }
     };

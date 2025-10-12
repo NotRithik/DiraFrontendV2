@@ -15,7 +15,7 @@ interface TransactionInputProps {
   maxAmount: number;
   balance: number;
   variant: 'yellow' | 'orange';
-  precision: number; // New prop for precision
+  precision: number;
 }
 
 export function TransactionInput({
@@ -47,7 +47,7 @@ export function TransactionInput({
     if (value.includes('.')) {
         const decimalPart = value.split('.')[1];
         if (decimalPart && decimalPart.length > precision) {
-            return; // Block input if it exceeds precision
+            return;
         }
     }
 
@@ -62,7 +62,7 @@ export function TransactionInput({
         }
       }
     } catch (error) {
-      // empty
+        console.error("Error handling input change:", error);
     }
 
     onAmountChange(value);
