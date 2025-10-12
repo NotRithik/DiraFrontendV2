@@ -5,6 +5,7 @@ import { Button } from "@/components/Button";
 import Link from "next/link";
 import type React from "react";
 import Footer from "@/components/Footer";
+import Image from "next/image"; // 1. Add import
 
 export default function HomePage() {
   // Smooth scroll handler
@@ -44,11 +45,14 @@ export default function HomePage() {
 
       {/* Manifesto Part 1 - Slide 2 */}
       <section id="manifesto" className="flex flex-col md:h-screen md:flex-row snap-start border-t-8 border-black">
-        <div className="md:w-1/2 md:border-r-8 border-black">
-          <img
+        {/* 2. Add 'relative' to the parent div */}
+        <div className="md:w-1/2 md:border-r-8 border-black relative">
+          {/* 3. Replace <img> with <Image> and use the 'fill' prop */}
+          <Image
             src="/assets/brutalist_dubai.png"
             alt="Brutalist Dubai Illustration"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
         </div>
         <div className="bg-white text-black flex-grow flex items-center md:w-1/2">
@@ -66,7 +70,7 @@ export default function HomePage() {
               </div>
               <div>
                 <h3 className="text-3xl md:text-4xl font-extrabold uppercase leading-tight">
-                  Unlocking Dubai's Digital Economy
+                  Unlocking Dubai&apos;s Digital Economy
                 </h3>
                 <p className="mt-6 text-xl font-sans">
                   Dira bridges traditional finance and DeFi. By bringing AED on-chain, we create

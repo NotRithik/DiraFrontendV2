@@ -2,7 +2,6 @@
 "use client";
 
 import React from 'react';
-import { Button } from './Button';
 import Decimal from 'decimal.js';
 
 interface TransactionInputProps {
@@ -62,7 +61,9 @@ export function TransactionInput({
           return;
         }
       }
-    } catch (error) {}
+    } catch (error) {
+      // empty
+    }
 
     onAmountChange(value);
   };

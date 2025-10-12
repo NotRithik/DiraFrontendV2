@@ -5,6 +5,7 @@ import { useLayoutEffect } from "react";
 import { Button } from "@/components/Button";
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import Image from "next/image"; // 1. Add import
 
 export default function AboutPage() {
   useLayoutEffect(() => {
@@ -42,7 +43,16 @@ export default function AboutPage() {
           <div className="mb-4 md:mb-6"><div className="inline-block border-2 border-white/30 px-3 py-1 uppercase text-xs tracking-widest">OUR MISSION</div></div>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
             <div className="md:col-span-8"><h1 className="text-4xl md:text-7xl font-extrabold uppercase leading-tight">Building the Financial Backbone of a Digital Dubai</h1></div>
-            <div className="hidden md:flex md:col-span-4 items-center justify-center"><img src="/assets/about_illustration.png" alt="Dira abstract graphic" className="w-full max-h-full object-contain" /></div>
+            {/* 2. Add 'relative' to the parent div */}
+            <div className="hidden md:flex md:col-span-4 items-center justify-center relative">
+              {/* 3. Replace <img> with <Image> and use the 'fill' prop */}
+              <Image 
+                src="/assets/about_illustration.png" 
+                alt="Dira abstract graphic" 
+                fill
+                className="object-contain" 
+              />
+            </div>
           </div>
           <div className="mt-8 md:mt-12 max-w-3xl">
             <p className="text-lg md:text-2xl font-sans text-white/90">We bridge traditional finance and the decentralized future. A trusted, fully-backed, and transparent on-chain Emirati Dirham (AED) — unlocking new possibilities for commerce, remittances, and institutional adoption.</p>
@@ -84,8 +94,8 @@ export default function AboutPage() {
 
       <section id="why" className="snap-start min-h-screen flex items-center justify-center border-t-8 border-black bg-white px-6 md:px-12 text-center" aria-label="Why Dubai">
         <div className="max-w-4xl space-y-8">
-          <h2 className="text-5xl md:text-7xl font-extrabold uppercase leading-tight">Built for Dubai's Vision</h2>
-          <p className="text-xl md:text-2xl text-black/85">Dubai is positioning itself as the world's digital finance hub. Dira is crafted to serve that vision — delivering a regulator-friendly, institution-ready on-chain AED to power tokenized assets, trade, and programmable liquidity.</p>
+          <h2 className="text-5xl md:text-7xl font-extrabold uppercase leading-tight">Built for Dubai&apos;s Vision</h2>
+          <p className="text-xl md:text-2xl text-black/85">Dubai is positioning itself as the world&apos;s digital finance hub. Dira is crafted to serve that vision — delivering a regulator-friendly, institution-ready on-chain AED to power tokenized assets, trade, and programmable liquidity.</p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
             <div className="p-6 border-4 border-black max-w-xs shadow-[4px_4px_0_#000]"><h4 className="font-extrabold uppercase text-sm">Regulatory Alignment</h4><p className="mt-2 text-sm">Designed to engage regulators, not bypass them.</p></div>
             <div className="p-6 border-4 border-black max-w-xs bg-yellow-400 shadow-[4px_4px_0_#000]"><h4 className="font-extrabold uppercase text-sm">Institutional Grade</h4><p className="mt-2 text-sm">Scalable custody, settlement, and reporting primitives.</p></div>

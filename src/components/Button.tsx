@@ -6,7 +6,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export function Button({ variant = "primary", className = "", ...props }: ButtonProps) {
-  let base =
+  const base =
     "font-extrabold uppercase px-6 py-3 md:py-4 text-lg md:text-xl transition-all w-full md:w-auto cursor-pointer";
   let style = "";
 
