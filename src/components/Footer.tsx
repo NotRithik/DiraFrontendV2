@@ -47,7 +47,7 @@ export default function Footer() {
         <div>
           <h5 className="font-bold uppercase mb-2">Code</h5>
           <ul className="space-y-2 text-sm">
-            <li><a className="underline" href="https://github.com/NotRithik/dira-frontend" target="_blank" rel="noreferrer">Frontend repo</a></li>
+            <li><a className="underline" href="https://github.com/NotRithik/DiraFrontendV2" target="_blank" rel="noreferrer">Frontend repo</a></li>
             <li><a className="underline" href="https://github.com/NotRithik/StableDira" target="_blank" rel="noreferrer">Contracts repo</a></li>
             <li><a className="underline" href="https://github.com/NotRithik/StableDira/issues" target="_blank" rel="noreferrer">Issues & Roadmap</a></li>
           </ul>
