@@ -99,7 +99,7 @@ export function TransactionInput({
           onChange={handleInputChange}
           className={`w-full bg-transparent p-4 text-2xl font-mono placeholder:text-current/50 focus:outline-none ${accentColor}`}
         />
-        <button onClick={handleSetMax} className="absolute right-4 uppercase text-sm font-bold underline">Max</button>
+        <button onClick={handleSetMax} className="absolute right-4 uppercase text-sm font-bold underline cursor-pointer">Max</button>
       </div>
     </div>
   );
