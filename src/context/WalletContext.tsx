@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { ChainInfo } from '@keplr-wallet/types';
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-empty-interface
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface Window extends KeplrWindow {}
 }
 
