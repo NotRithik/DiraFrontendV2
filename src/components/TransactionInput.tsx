@@ -15,7 +15,7 @@ interface TransactionInputProps {
   maxAmount: number;
   balance: number;
   variant: 'yellow' | 'orange';
-  precision: number;
+  precision: number; 
 }
 
 export function TransactionInput({
@@ -47,7 +47,7 @@ export function TransactionInput({
     if (value.includes('.')) {
         const decimalPart = value.split('.')[1];
         if (decimalPart && decimalPart.length > precision) {
-            return;
+            return; 
         }
     }
 
@@ -77,13 +77,13 @@ export function TransactionInput({
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => onModeChange('add')}
-          className={`py-2 text-center uppercase font-bold border-4 ${borderColor} ${isAdd ? (variant === 'yellow' ? 'bg-black text-yellow-400' : 'bg-white text-orange-600') : ''}`}
+          className={`py-2 text-center uppercase font-bold border-4 cursor-pointer ${borderColor} ${isAdd ? (variant === 'yellow' ? 'bg-black text-yellow-400' : 'bg-white text-orange-600') : ''}`}
         >
           {addLabel}
         </button>
         <button
           onClick={() => onModeChange('remove')}
-          className={`py-2 text-center uppercase font-bold border-4 ${borderColor} ${!isAdd ? (variant === 'yellow' ? 'bg-black text-yellow-400' : 'bg-white text-orange-600') : ''}`}
+          className={`py-2 text-center uppercase font-bold border-4 cursor-pointer ${borderColor} ${!isAdd ? (variant === 'yellow' ? 'bg-black text-yellow-400' : 'bg-white text-orange-600') : ''}`}
         >
           {removeLabel}
         </button>
