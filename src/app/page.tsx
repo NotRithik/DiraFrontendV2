@@ -92,7 +92,7 @@ export default function HomePage() {
                 On-Chain
               </h2>
               <p className="mt-6 text-xl font-sans max-w-2xl mx-auto">
-                A transparent, scalable, and regulator-friendly stablecoin infrastructure. Powered by OM and built for institutional adoption. Not just another stablecoin — Dira is the foundation for Dubai’s global digital economy.
+                A transparent and scalable stablecoin infrastructure. Powered by OM and built for widespread adoption. Not just another stablecoin—Dira is the foundation for a global, open economy.
               </p>
             </div>
             <div className="w-24 h-1.5 bg-black my-12 md:my-16 mx-auto" />

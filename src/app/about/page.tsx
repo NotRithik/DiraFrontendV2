@@ -55,7 +55,7 @@ export default function AboutPage() {
             </div>
           </div>
           <div className="mt-8 md:mt-12 max-w-3xl">
-            <p className="text-lg md:text-2xl font-sans text-white/90">We bridge traditional finance and the decentralized future. A trusted, fully-backed, and transparent on-chain Emirati Dirham (AED) — unlocking new possibilities for commerce, remittances, and institutional adoption.</p>
+            <p className="text-lg md:text-2xl font-sans text-white/90">We bridge traditional finance and the decentralized future. A trusted, fully-backed, and transparent on-chain Emirati Dirham (AED) — unlocking new possibilities for commerce, remittances, and widespread adoption.</p>
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl">
               <Link href="/" className="block w-full"><Button variant="white" className="w-full md:w-full">Home</Button></Link>
               <Link href="/dashboard" className="block w-full"><Button variant="primary" className="w-full md:w-full">Dashboard</Button></Link>
@@ -76,14 +76,14 @@ export default function AboutPage() {
               <div className="problem-equal bg-white/90 p-4 border-4 border-black max-w-[340px] w-full shadow-[4px_4px_0_#000]"><h5 className="font-bold uppercase text-sm">Slow &amp; Costly</h5><p className="text-sm mt-2">Cross-border flows and remittances.</p></div>
               <div className="problem-equal bg-white/90 p-4 border-4 border-black max-w-[340px] w-full shadow-[4px_4px_0_#000]"><h5 className="font-bold uppercase text-sm">Limited Liquidity</h5><p className="text-sm mt-2">Scarcity of native on-chain AED.</p></div>
               <div className="hidden sm:block" aria-hidden />
-              <div className="problem-equal bg-white/90 p-4 border-4 border-black max-w-[340px] w-full sm:col-start-2 shadow-[4px_4px_0_#000]"><h5 className="font-bold uppercase text-sm">Institutional Barriers</h5><p className="text-sm mt-2">Regulatory complexity and lack of trusted assets.</p></div>
+              <div className="problem-equal bg-white/90 p-4 border-4 border-black max-w-[340px] w-full sm:col-start-2 shadow-[4px_4px_0_#000]"><h5 className="font-bold uppercase text-sm">Walled Gardens</h5><p className="text-sm mt-2">Closed systems and a lack of trusted, open assets.</p></div>
             </div>
           </article>
         </div>
         <div className="p-10 md:p-16 bg-yellow-400 flex items-center justify-center md:border-l-4 border-black">
           <article className="max-w-xl w-full space-y-6">
             <div className="flex items-center gap-4"><div className="text-4xl font-extrabold">02</div><h2 className="text-3xl md:text-4xl font-extrabold uppercase leading-tight">The Dira Protocol</h2></div>
-            <p className="text-lg text-black/85">Dira is the bridge: an over-collateralized, auditable AED stablecoin designed for real-world use. Predictable liquidity, on-chain settlement, and regulatory-first design for institutional adoption.</p>
+            <p className="text-lg text-black/85">Dira is the bridge: an over-collateralized, auditable AED stablecoin designed for real-world use. It offers predictable liquidity, on-chain settlement, and a transparent design for broad adoption.</p>
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 justify-items-center">
               <div className="problem-equal bg-white/90 p-4 border-4 border-black max-w-[340px] w-full shadow-[4px_4px_0_#000]"><h5 className="font-bold uppercase text-sm">Verifiable</h5><p className="text-sm mt-2">On-chain reserves and automated reporting.</p></div>
               <div className="problem-equal bg-white/90 p-4 border-4 border-black max-w-[340px] w-full shadow-[4px_4px_0_#000]"><h5 className="font-bold uppercase text-sm">Programmable</h5><p className="text-sm mt-2">Integrate Dira into contracts, markets, and payments.</p></div>
@@ -95,10 +95,10 @@ export default function AboutPage() {
       <section id="why" className="snap-start min-h-screen flex items-center justify-center border-t-8 border-black bg-white px-6 md:px-12 text-center" aria-label="Why Dubai">
         <div className="max-w-4xl space-y-8">
           <h2 className="text-5xl md:text-7xl font-extrabold uppercase leading-tight">Built for Dubai&apos;s Vision</h2>
-          <p className="text-xl md:text-2xl text-black/85">Dubai is positioning itself as the world&apos;s digital finance hub. Dira is crafted to serve that vision — delivering a regulator-friendly, institution-ready on-chain AED to power tokenized assets, trade, and programmable liquidity.</p>
+          <p className="text-xl md:text-2xl text-black/85">Dubai is emerging as a global digital finance hub. Dira is crafted to serve that vision — delivering a community-focused, open on-chain AED to power tokenized assets, trade, and programmable liquidity for everyone.</p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <div className="p-6 border-4 border-black max-w-xs shadow-[4px_4px_0_#000]"><h4 className="font-extrabold uppercase text-sm">Regulatory Alignment</h4><p className="mt-2 text-sm">Designed to engage regulators, not bypass them.</p></div>
-            <div className="p-6 border-4 border-black max-w-xs bg-yellow-400 shadow-[4px_4px_0_#000]"><h4 className="font-extrabold uppercase text-sm">Institutional Grade</h4><p className="mt-2 text-sm">Scalable custody, settlement, and reporting primitives.</p></div>
+            <div className="p-6 border-4 border-black max-w-xs shadow-[4px_4px_0_#000]"><h4 className="font-extrabold uppercase text-sm">Open &amp; Transparent</h4><p className="mt-2 text-sm">Designed for clarity and open participation.</p></div>
+            <div className="p-6 border-4 border-black max-w-xs bg-yellow-400 shadow-[4px_4px_0_#000]"><h4 className="font-extrabold uppercase text-sm">Community-Ready</h4><p className="mt-2 text-sm">Scalable and secure primitives for settlement and reporting.</p></div>
           </div>
         </div>
       </section>
@@ -112,9 +112,7 @@ export default function AboutPage() {
             <div className="p-10 border-4 border-[#fdc800] bg-black text-[#fdc800] w-full max-w-md shadow-[12px_12px_0_#fdc800]"><h3 className="text-4xl font-extrabold uppercase">Transparency</h3><p className="mt-4 text-lg text-[#fdc800]/90">Every Dira is verifiably backed by on-chain collateral. Reserves and system health are auditable, 24/7.</p></div>
             <div className="p-10 border-4 border-[#fdc800] bg-black text-[#fdc800] w-full max-w-md shadow-[12px_12px_0_#fdc800]"><h3 className="text-4xl font-extrabold uppercase">Security</h3><p className="mt-4 text-lg text-[#fdc800]/90">Battle-tested smart contracts and robust over-collateralization guard against market shocks.</p></div>
           </div>
-          <div className="flex items-center justify-center">
-            <div className="p-10 border-4 border-black bg-[#fdc800] text-black max-w-md shadow-[12px_12px_0_#000]"><h3 className="text-4xl font-extrabold uppercase">Compliance</h3><p className="mt-4 text-lg font-sans text-black/80">A regulator-first framework that enables safe, institutional-scale adoption — bridging innovation and oversight.</p></div>
-          </div>
+          <div className="flex items-center justify-center"><div className="p-10 border-4 border-black bg-[#fdc800] text-black max-w-md shadow-[12px_12px_0_#000]"><h3 className="text-4xl font-extrabold uppercase">Openness</h3><p className="mt-4 text-lg font-sans text-black/80">An open-source framework that enables permissionless innovation and community-driven development.</p></div></div>
         </div>
       </section>
 

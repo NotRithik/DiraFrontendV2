@@ -52,9 +52,6 @@ The following features are planned and will be implemented soon:
 
 *   **Collateral Auction**: Participate in Collateral Auctions to buy liquidated assets.
 *   **Oracle Price Feed**: Fetch collateral token's price directly from oracles on-chain and display within the frontend.
-*   **Governance Tokens**: Token-holders will be able to vote on critical decisions regarding the Dira protocol through a governance interface.
-*   **Auto-Minting/Burning of Governance Tokens**:  The frontend will reflect and interact with the smart contract's auto-minting and burning of governance tokens.
-*   **Fees**:  Stability fees will be introduced, and the frontend will display and incorporate fee information.
 
 ---
 
@@ -109,7 +106,6 @@ The Dira project is committed to ongoing development and expansion. Future roadm
 *   **Phase 3: Expansion and Governance Features**
     *   Frontend extension to support additional regional stablecoins, such as SGD.
     *   Development of UI components for a multi-currency stablecoin Decentralized Exchange (DEX) interface.
-    *   Integration of governance features within the frontend, enabling user participation in Dira protocol governance.
 
 ---
 
