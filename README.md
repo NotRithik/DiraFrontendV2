@@ -117,7 +117,7 @@ The Dira project is committed to ongoing development and expansion. Future roadm
 
 We encourage community contributions to the Dira Frontend project.
 
-1.  Fork the [Dira Frontend Repository](https://github.com/NotRithik/dira-frontend).
+1.  Fork the [Dira Frontend Repository](https://github.com/NotRithik/DiraFrontendV2).
 2.  Create a dedicated feature branch for your contributions.
 3.  Submit a pull request with a detailed description of the implemented changes.
 
