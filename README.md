@@ -17,7 +17,7 @@ To begin using the Dira Frontend application, please follow these steps:
     Dira operates on the Mantra DuKong testnet and necessitates testnet OM tokens for interaction. These tokens can be obtained via the Mantra Chain Discord faucet. Join the [Mantra Chain Discord](https://discord.gg/N72A9zkCRZ), verify your account, acquire the faucet user role, and locate the faucet channel to request testnet OM.
 
 3.  **Access the Dira Frontend Application:**
-    Navigate to the Dira Frontend application in your web browser: [Dira Frontend](https://dira-alpha.vercel.app/).
+    Navigate to the Dira Frontend application in your web browser: [Dira Frontend](https://dira.foundation/).
 
 4.  **Connect Keplr Wallet:**
     On the Dira Frontend webpage, click the "Connect Keplr Wallet" button located in the top right corner. Follow the Keplr Wallet extension prompts to establish a connection to the application and the Mantra DuKong testnet.
